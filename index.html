@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="ar" dir="ltr" data-dark>
+﻿<!DOCTYPE html>
+<html lang="en" dir="ltr" data-dark>
 
 <head>
   <meta charset="UTF-8">
@@ -313,7 +313,7 @@
 
     html {
       scroll-behavior: smooth;
-      overflow-x: hidden
+      overflow-x: clip
     }
 
     .sr-only {
@@ -328,12 +328,17 @@
       border-width: 0;
     }
 
+    html, body {
+      overflow-x: clip;
+      max-width: 100vw;
+    }
+
     body {
       background: var(--bg);
       color: var(--text);
       font-family: 'Inter', 'Readex Pro', -apple-system, BlinkMacSystemFont, sans-serif;
       font-weight: 400;
-      overflow-x: hidden;
+      overflow-x: clip;
       transition: background .4s, color .4s;
     }
 
@@ -718,8 +723,11 @@
       display: flex;
       flex-direction: column;
       transform: translateX(100%);
-      transition: transform .4s cubic-bezier(.4, 0, .2, 1);
+      transition: transform .35s cubic-bezier(.4, 0, .2, 1), opacity .35s, visibility .35s;
       overflow-y: auto;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
     }
 
     [dir=rtl] .sidebar {
@@ -727,11 +735,14 @@
       left: 0;
       border-left: none;
       border-right: 1px solid var(--a-border2);
-      transform: translateX(-100%)
+      transform: translateX(-100%);
     }
 
     .sidebar.show {
-      transform: translateX(0)
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateX(0);
     }
 
     [dir=rtl] .sidebar.show {
@@ -1666,7 +1677,8 @@
    ══════════════════════════════ */
     .sec {
       padding: 64px 52px;
-      position: relative
+      position: relative;
+      overflow-x: clip;
     }
 
     .sec-in {
@@ -4681,7 +4693,7 @@
 
     /* â•â•â•â• MOBILE RESPONSIVENESS & CENTERED HERO HARMONY â•â•â•â• */
     html, body {
-      overflow-x: hidden;
+      overflow-x: clip;
       width: 100%;
       position: relative;
     }
@@ -6497,6 +6509,8 @@
 
         var curData = isAr ? T.ar : T.en;
         document.documentElement.setAttribute('dir', isAr ? 'rtl' : 'ltr');
+        document.documentElement.setAttribute('lang', isAr ? 'ar' : 'en');
+        if (isAr) { document.body.classList.add('lang-ar'); } else { document.body.classList.remove('lang-ar'); }
         document.querySelectorAll('[data-i]').forEach(function(el) {
             var key = el.getAttribute('data-i');
             if(curData[key]) el.textContent = curData[key];
@@ -6593,7 +6607,1315 @@
       var mX = window.innerWidth / 2, mY = window.innerHeight / 2;
       
       // Finance & Accounting indicators instead of programming tags
-      var financeTags = ['EGP', '$', '∑', 'ROI', 'IFRS', 'TAX', 'P&L', 'ERP', 'Excel', '%', 'VAT'];
+      var financeTags = ['EGP', '$', 'ROI', 'IFRS', 'TAX', 'P&L', 'ERP', 'Excel', '%', 'VAT'];
+
+      window.addEventListener('mousemove', function(e) {
+        mX = e.clientX;
+        mY = e.clientY;
+      });
+
+      function init() {
+        cvs.width = window.innerWidth;
+        cvs.height = window.innerHeight;
+        nodes = [];
+        
+        var isMobile = window.innerWidth < 768;
+        NUM = isMobile ? 22 : 55; 
+        REACH = isMobile ? 95 : 140; 
+        var activeTags = isMobile ? ['EGP', '$', 'P&L', 'ROI', '%'] : financeTags;
+
+        for (var i = 0; i < NUM; i++) {
+          nodes.push({
+            x: Math.random() * cvs.width,
+            y: Math.random() * cvs.height,
+            vx: (Math.random() - .5) * (isMobile ? 0.35 : 0.65), 
+            vy: (Math.random() - .5) * (isMobile ? 0.35 : 0.65),
+            r: 1.4 + Math.random() * (isMobile ? 1.0 : 1.5),
+            lbl: Math.random() > (isMobile ? 0.8 : 0.7) ? activeTags[Math.floor(Math.random() * activeTags.length)] : null,
+            ph: Math.random() * 6.28
+          });
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        clock++;
+        var col = getComputedStyle(document.documentElement).getPropertyValue('--a').trim() || '#2563EB';
+
+        for (var i = 0; i < NUM; i++) {
+          var n = nodes[i];
+          // Interactive mouse repulsion
+          var dxm = n.x - mX, dym = n.y - mY, dm2 = dxm * dxm + dym * dym;
+          if (dm2 < 24000) { 
+            var dm = Math.sqrt(dm2); 
+            if (dm > 0) {
+              n.x += dxm / dm * 0.7; 
+              n.y += dym / dm * 0.7; 
+            }
+          }
+          
+          n.x += n.vx; 
+          n.y += n.vy;
+          if (n.x < 0 || n.x > cvs.width)  n.vx *= -1;
+          if (n.y < 0 || n.y > cvs.height) n.vy *= -1;
+          
+          for (var j = i + 1; j < NUM; j++) {
+            var n2 = nodes[j], dx = n.x - n2.x, dy = n.y - n2.y, d2 = dx * dx + dy * dy;
+            if (d2 < REACH * REACH) {
+              var alpha = (1 - Math.sqrt(d2) / REACH) * 0.35;
+              ctx.globalAlpha = alpha; 
+              ctx.strokeStyle = col; 
+              ctx.lineWidth = 0.75;
+              ctx.beginPath(); 
+              ctx.moveTo(n.x, n.y); 
+              ctx.lineTo(n2.x, n2.y); 
+              ctx.stroke();
+              
+              if ((clock + i * 7 + j * 3) % 110 < 4) {
+                var t = ((clock + i * 7 + j * 3) % 110) / 4;
+                var px = n.x + (n2.x - n.x) * t, py = n.y + (n2.y - n.y) * t;
+                ctx.globalAlpha = 0.85; 
+                ctx.fillStyle = col; 
+                ctx.shadowBlur = 8; 
+                ctx.shadowColor = col;
+                ctx.beginPath(); 
+                ctx.arc(px, py, 2.2, 0, 6.28); 
+                ctx.fill(); 
+                ctx.shadowBlur = 0;
+              }
+            }
+          }
+          
+          var pulse = 0.5 + 0.5 * Math.sin(clock * 0.04 + n.ph);
+          ctx.globalAlpha = 0.4 + 0.3 * pulse; 
+          ctx.fillStyle = col;
+          ctx.beginPath(); 
+          ctx.arc(n.x, n.y, n.r * (1 + 0.25 * pulse), 0, 6.28); 
+          ctx.fill();
+          
+          if (n.lbl) {
+            ctx.globalAlpha = 0.35 + 0.25 * pulse; 
+            ctx.fillStyle = col;
+            ctx.font = '600 11px Inter, sans-serif';
+            ctx.fillText(n.lbl, n.x + 6, n.y - 3);
+          }
+        }
+
+        /* â•â•â•â• Interactive Laser Arcs from Cursor to Nodes â•â•â•â• */
+        for (var k = 0; k < NUM; k++) {
+          var nk = nodes[k];
+          var dkx = nk.x - mX, dky = nk.y - mY;
+          var distK = Math.sqrt(dkx * dkx + dky * dky);
+          if (distK < 155) {
+            ctx.beginPath();
+            ctx.moveTo(mX, mY);
+            ctx.lineTo(nk.x, nk.y);
+            ctx.strokeStyle = col;
+            ctx.globalAlpha = (1 - distK / 155) * 0.45;
+            ctx.lineWidth = 1.1;
+            ctx.stroke();
+          }
+        }
+
+        /* â•â•â•â• Glowing Financial Growth Trendline Wave â•â•â•â• */
+        ctx.save();
+        ctx.beginPath();
+        var waveY = cvs.height * 0.76;
+        for (var wx = 0; wx <= cvs.width; wx += 22) {
+          var wy = waveY + Math.sin(wx * 0.003 + clock * 0.018) * 30 + Math.cos(wx * 0.007 + clock * 0.012) * 16;
+          if (wx === 0) ctx.moveTo(wx, wy);
+          else ctx.lineTo(wx, wy);
+        }
+        ctx.strokeStyle = col;
+        ctx.globalAlpha = 0.14;
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+
+        ctx.lineTo(cvs.width, cvs.height);
+        ctx.lineTo(0, cvs.height);
+        ctx.closePath();
+        var waveGrad = ctx.createLinearGradient(0, waveY - 40, 0, cvs.height);
+        waveGrad.addColorStop(0, col);
+        waveGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = waveGrad;
+        ctx.globalAlpha = 0.035;
+        ctx.fill();
+        ctx.restore();
+
+        ctx.globalAlpha = 1;
+        requestAnimationFrame(draw);
+      }
+
+      window.addEventListener('resize', init);
+      init(); 
+      draw();
+    })();
+
+    /* ✨ ANIMATED STAT COUNTERS (COUNT-UP) ✨ */
+    (function initCountUp() {
+      var counters = document.querySelectorAll('[data-count]');
+      if (!counters.length) return;
+
+      var counted = new Set();
+      var countObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting && !counted.has(entry.target)) {
+            counted.add(entry.target);
+            var el = entry.target;
+            var target = parseInt(el.getAttribute('data-count'), 10);
+            var suffix = el.getAttribute('data-suffix') || '';
+            var startTime = null;
+            var duration = 1200;
+
+            function animate(currentTime) {
+              if (!startTime) startTime = currentTime;
+              var progress = Math.min((currentTime - startTime) / duration, 1);
+              var ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+              var current = Math.floor(ease * target);
+              el.textContent = current + suffix;
+              if (progress < 1) {
+                requestAnimationFrame(animate);
+              } else {
+                el.textContent = target + suffix;
+              }
+            }
+            requestAnimationFrame(animate);
+          }
+        });
+      }, { threshold: 0.25 });
+
+      counters.forEach(function(c) { countObserver.observe(c); });
+    })();
+
+    /* ✨ CERTIFICATE LIGHTBOX MODAL ✨ */
+    window.openCertModal = function(e, src, title) {
+      if(e) e.preventDefault();
+      var modal = document.getElementById('certModal');
+      var content = document.getElementById('certModalContent');
+      var titleEl = document.getElementById('certModalTitle');
+      var linkEl = document.getElementById('certModalLink');
+      if(!modal || !content) return;
+
+      titleEl.textContent = title || (isAr ? 'معاينة الشهادة' : 'Certificate Preview');
+      linkEl.href = src;
+
+      if(src.toLowerCase().endsWith('.pdf')) {
+        content.innerHTML = '<iframe src="' + src + '" style="width:100%;height:65vh;border:none;border-radius:8px;"></iframe>';
+      } else {
+        content.innerHTML = '<img src="' + src + '" alt="' + (title || 'Certificate') + '" loading="lazy">';
+      }
+
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.closeCertModal = function(e) {
+      if(e && e.target && e.target.closest('.cert-modal-box') && !e.target.classList.contains('cert-modal-close')) {
+        return;
+      }
+      var modal = document.getElementById('certModal');
+      if(modal) modal.classList.remove('active');
+      document.body.style.overflow = '';
+    };
+
+    document.addEventListener('keydown', function(e) {
+      if(e.key === 'Escape') closeCertModal();
+    });
+
+    /* ✨ MOBILE QUICK ACTION BAR SCROLL TRIGGER ✨ */
+    var mobBar = document.getElementById('mobileQuickBar');
+    window.addEventListener('scroll', function() {
+      if(!mobBar) return;
+      if(window.scrollY > 160) {
+        mobBar.classList.add('visible');
+      } else {
+        mobBar.classList.remove('visible');
+      }
+    }, { passive: true });
+
+    /* ✨ DYNAMIC TYPEWRITER & ROLE CYCLER ✨ */
+    (function() {
+      var rolesEn = [
+        "Real Estate Investment Accountant",
+        "Inventory & Cost Control Analyst",
+        "Cost Accountant",
+        "Expense & Accounts Payable Accountant",
+        "Revenue Recognition & IFRS Specialist",
+        "General & Financial Reporting Accountant",
+        "VAT, Tax & ETA E-Invoicing Specialist"
+      ];
+      var rolesAr = [
+        "محاسب استثمار عقاري",
+        "محاسب تكاليف وتحليل مخزون",
+        "محاسب تكاليف",
+        "محاسب مصاريف ومدفوعات",
+        "محاسب إيرادات ومعايير IFRS",
+        "محاسب عام وقوائم مالية",
+        "أخصائي ضرائب وفاتورة إلكترونية"
+      ];
+      
+      var textEl = document.getElementById('roleRotator');
+      if(!textEl) return;
+
+      var currentIdx = 0;
+      var charIdx = 0;
+      var isDeleting = false;
+      var timeoutId = null;
+
+      function getList() {
+        return (typeof isAr !== 'undefined' && isAr) ? rolesAr : rolesEn;
+      }
+
+      window.updateTypewriterLang = function(ar) {
+        if(timeoutId) clearTimeout(timeoutId);
+        currentIdx = 0;
+        charIdx = 0;
+        isDeleting = false;
+        type();
+      };
+
+      function type() {
+        var list = getList();
+        var currentText = list[currentIdx % list.length];
+        
+        if (isDeleting) {
+          textEl.textContent = currentText.substring(0, charIdx - 1);
+          charIdx--;
+        } else {
+          textEl.textContent = currentText.substring(0, charIdx + 1);
+          charIdx++;
+        }
+
+        var speed = isDeleting ? 25 : 55;
+
+        if (!isDeleting && charIdx === currentText.length) {
+          speed = 2200; // Pause when complete
+          isDeleting = true;
+        } else if (isDeleting && charIdx === 0) {
+          isDeleting = false;
+          currentIdx++;
+          speed = 400; // Pause before typing next
+        }
+
+        timeoutId = setTimeout(type, speed);
+      }
+
+      type();
+    })();
+
+    /* â•â•â•â• ULTRA NAME TYPEWRITER & BILINGUAL GLOW â•â•â•â• */
+    (function initNameTypewriter() {
+      var nameEl = document.getElementById('nameTypewriter');
+      if (!nameEl) return;
+
+      var names = [
+        { first: "George", accent: "Gamal", last: "" },
+        { first: "George", accent: "Gamal", last: "Helmy" },
+        { first: "جورج", accent: "جمال", last: "" },
+        { first: "جورج", accent: "جمال", last: "حلمي" }
+      ];
+
+      var currentIdx = (typeof isAr !== 'undefined' && isAr) ? 2 : 0;
+      var stage = 0; // 0: first, 1: accent, 2: last
+      var charIdx = 0;
+      var isDeleting = false;
+      var timeoutId = null;
+
+      function render(fText, aText, lText) {
+        var html = fText;
+        if (aText) {
+          html += ' <em class="h-name-accent">' + aText + '</em>';
+        }
+        if (lText) {
+          html += ' ' + lText;
+        }
+        nameEl.innerHTML = html;
+      }
+
+      window.triggerNameTypewriterReset = function(ar) {
+        if (timeoutId) clearTimeout(timeoutId);
+        currentIdx = ar ? 2 : 0;
+        stage = 0;
+        charIdx = 0;
+        isDeleting = false;
+        render('', '', '');
+        type();
+      };
+
+      function type() {
+        var n = names[currentIdx % names.length];
+        var fTarget = n.first;
+        var aTarget = n.accent;
+        var lTarget = n.last;
+
+        if (!isDeleting) {
+          if (stage === 0) {
+            charIdx++;
+            render(fTarget.substring(0, charIdx), '', '');
+            if (charIdx >= fTarget.length) {
+              stage = 1;
+              charIdx = 0;
+            }
+          } else if (stage === 1) {
+            charIdx++;
+            render(fTarget, aTarget.substring(0, charIdx), '');
+            if (charIdx >= aTarget.length) {
+              stage = 2;
+              charIdx = 0;
+            }
+          } else if (stage === 2) {
+            charIdx++;
+            render(fTarget, aTarget, lTarget.substring(0, charIdx));
+            if (charIdx >= lTarget.length) {
+              nameEl.classList.add('name-glow-pulse');
+              setTimeout(function() { nameEl.classList.remove('name-glow-pulse'); }, 1400);
+              isDeleting = true;
+              timeoutId = setTimeout(type, 3800);
+              return;
+            }
+          }
+          var speed = 65 + Math.random() * 25;
+          timeoutId = setTimeout(type, speed);
+        } else {
+          if (stage === 2) {
+            if (charIdx > 0) {
+              charIdx--;
+              render(fTarget, aTarget, lTarget.substring(0, charIdx));
+            } else {
+              stage = 1;
+              charIdx = aTarget.length;
+            }
+          } else if (stage === 1) {
+            if (charIdx > 0) {
+              charIdx--;
+              render(fTarget, aTarget.substring(0, charIdx), '');
+            } else {
+              stage = 0;
+              charIdx = fTarget.length;
+            }
+          } else if (stage === 0) {
+            if (charIdx > 0) {
+              charIdx--;
+              render(fTarget.substring(0, charIdx), '', '');
+            } else {
+              isDeleting = false;
+              if (typeof isAr !== 'undefined' && isAr) {
+                currentIdx = (currentIdx === 2) ? 3 : 2;
+              } else {
+                currentIdx = (currentIdx === 0) ? 1 : 0;
+              }
+              stage = 0;
+              charIdx = 0;
+              timeoutId = setTimeout(type, 450);
+              return;
+            }
+          }
+          timeoutId = setTimeout(type, 30);
+        }
+      }
+
+      render('', '', '');
+      timeoutId = setTimeout(type, 300);
+    })();
+
+    /* â•â•â•â• FINANCIAL CLICK SPARK BURST â•â•â•â• */
+    (function initClickSparks() {
+      var glyphs = ['\u2726', '\u2605', '+', '\u25B2', '\u2022', '\u25C6'];
+      var colors = ['#0284c7', '#38bdf8', '#10b981', '#f59e0b', '#a855f7'];
+
+      document.addEventListener('pointerdown', function(e) {
+        var burst = document.createElement('div');
+        burst.className = 'click-spark-burst';
+        burst.style.left = e.clientX + 'px';
+        burst.style.top = e.clientY + 'px';
+
+        var count = 8;
+        for (var i = 0; i < count; i++) {
+          var s = document.createElement('span');
+          s.className = 'click-spark';
+          s.textContent = glyphs[Math.floor(Math.random() * glyphs.length)];
+          var angle = (i / count) * 2 * Math.PI + (Math.random() - 0.5) * 0.4;
+          var dist = 35 + Math.random() * 45;
+          var tx = Math.cos(angle) * dist + 'px';
+          var ty = Math.sin(angle) * dist + 'px';
+          s.style.setProperty('--tx', tx);
+          s.style.setProperty('--ty', ty);
+          s.style.setProperty('--color', colors[Math.floor(Math.random() * colors.length)]);
+          burst.appendChild(s);
+        }
+        document.body.appendChild(burst);
+        setTimeout(function() {
+          if (burst && burst.parentNode) burst.parentNode.removeChild(burst);
+        }, 800);
+      });
+    })();
+
+    /* ✨ 3D PERSPECTIVE TILT & HERO SPOTLIGHT ✨ */
+    (function() {
+      var hero = document.getElementById('hero');
+      var spotlight = document.getElementById('heroSpotlight');
+      var photoWrap = document.getElementById('hPhotoWrap');
+      var frame = document.getElementById('hFrame');
+      var glare = document.getElementById('hGlare');
+      
+      if (!hero) return;
+
+      var isFine = window.matchMedia('(pointer: fine)').matches;
+
+      // Spotlight tracking on PC
+      if (spotlight && isFine) {
+        hero.addEventListener('mousemove', function(e) {
+          var rect = hero.getBoundingClientRect();
+          var x = ((e.clientX - rect.left) / rect.width) * 100;
+          var y = ((e.clientY - rect.top) / rect.height) * 100;
+          spotlight.style.setProperty('--spot-x', x.toFixed(1) + '%');
+          spotlight.style.setProperty('--spot-y', y.toFixed(1) + '%');
+        }, { passive: true });
+      }
+
+      // Photo Card is rock-solid & stable (No erratic 3D tilting or wobbling)
+    })();
+
+    /* ✨ MAGNETIC BUTTONS PHYSICS ✨ */
+    (function() {
+      if (!window.matchMedia('(pointer: fine)').matches) return;
+      var btns = document.querySelectorAll('.h-btns .btn');
+      
+      btns.forEach(function(btn) {
+        btn.addEventListener('mousemove', function(e) {
+          var rect = btn.getBoundingClientRect();
+          var relX = e.clientX - (rect.left + rect.width / 2);
+          var relY = e.clientY - (rect.top + rect.height / 2);
+          
+          var pullX = relX * 0.32;
+          var pullY = relY * 0.32;
+          
+          btn.style.transition = 'transform 0.1s ease-out, box-shadow 0.25s ease';
+          btn.style.transform = 'translate3d(' + pullX.toFixed(1) + 'px, ' + pullY.toFixed(1) + 'px, 0) scale(1.04)';
+        });
+
+        btn.addEventListener('mouseleave', function() {
+          btn.style.transition = 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease';
+          btn.style.transform = 'translate3d(0, 0, 0) scale(1)';
+        });
+      });
+    })();
+
+    /* ✨ INTERACTIVE CARD SPOTLIGHTS ✨ */
+    (function() {
+      if (!window.matchMedia('(pointer: fine)').matches) return;
+      var cards = document.querySelectorAll('.tl-item, .cert-item, .sk-card-rich');
+      cards.forEach(function(card) {
+        card.addEventListener('mousemove', function(e) {
+          var rect = card.getBoundingClientRect();
+          var x = e.clientX - rect.left;
+          var y = e.clientY - rect.top;
+          card.style.setProperty('--card-mx', x + 'px');
+          card.style.setProperty('--card-my', y + 'px');
+        }, { passive: true });
+      });
+    })();
+
+    /* ✨ SMART SKILLS MATRIX FILTERING ✨ */
+    window.filterSkills = function(cat, btn) {
+      var buttons = document.querySelectorAll('.sk-filter-btn');
+      buttons.forEach(function(b) { b.classList.remove('active'); });
+      if(btn) btn.classList.add('active');
+
+      var cards = document.querySelectorAll('.sk-card-rich');
+      cards.forEach(function(card) {
+        if(cat === 'all' || card.getAttribute('data-cat') === cat) {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+    };
+
+    /* ===================================================
+   EXECUTIVE CFO DASHBOARD & CORPORATE BI ENGINE
+   =================================================== */
+
+(function() {
+  var cfoState = {
+    tab: 'cfo',
+    sector: 'realestate',
+    period: 'annual',
+    revenue: 36000000,
+    cogsPct: 0.58,
+    sgaPct: 0.12,
+    taxRate: 0.225
+  };
+
+  window.switchFinSuiteTab = function(tabName) {
+    cfoState.tab = tabName;
+    var btnCfo = document.getElementById('tabBtnCfo');
+    var btnTax = document.getElementById('tabBtnTax');
+    var panelCfo = document.getElementById('cfoDashboardPanel');
+    var panelTax = document.getElementById('taxEnginePanel');
+
+    if(tabName === 'cfo') {
+      if(btnCfo) btnCfo.classList.add('active');
+      if(btnTax) btnTax.classList.remove('active');
+      if(panelCfo) panelCfo.classList.add('active');
+      if(panelTax) panelTax.classList.remove('active');
+      renderCfoSvgChart();
+    } else {
+      if(btnTax) btnTax.classList.add('active');
+      if(btnCfo) btnCfo.classList.remove('active');
+      if(panelTax) panelTax.classList.add('active');
+      if(panelCfo) panelCfo.classList.remove('active');
+      if(window.runSimCalc) window.runSimCalc();
+    }
+  };
+
+  window.setCfoSector = function(sector) {
+    cfoState.sector = sector;
+    var pillRe = document.getElementById('secPillRealEstate');
+    var pillRet = document.getElementById('secPillRetail');
+
+    if(sector === 'realestate') {
+      if(pillRe) pillRe.classList.add('active');
+      if(pillRet) pillRet.classList.remove('active');
+      // Real estate development standard margins
+      cfoState.cogsPct = 0.58;
+      cfoState.sgaPct = 0.12;
+    } else {
+      if(pillRet) pillRet.classList.add('active');
+      if(pillRe) pillRe.classList.remove('active');
+      // Commercial trade higher turnover tighter margin
+      cfoState.cogsPct = 0.68;
+      cfoState.sgaPct = 0.16;
+    }
+
+    var sliderCogs = document.getElementById('cfoRangeCogs');
+    var sliderSga = document.getElementById('cfoRangeSga');
+    if(sliderCogs) sliderCogs.value = Math.round(cfoState.cogsPct * 100);
+    if(sliderSga) sliderSga.value = Math.round(cfoState.sgaPct * 100);
+
+    updateCfoSimulation();
+  };
+
+  window.setCfoPeriod = function(period) {
+    cfoState.period = period;
+    var pillAnn = document.getElementById('perPillAnnual');
+    var pillQtr = document.getElementById('perPillQuarter');
+
+    if(period === 'annual') {
+      if(pillAnn) pillAnn.classList.add('active');
+      if(pillQtr) pillQtr.classList.remove('active');
+    } else {
+      if(pillQtr) pillQtr.classList.add('active');
+      if(pillAnn) pillAnn.classList.remove('active');
+    }
+    renderCfoSvgChart();
+  };
+
+  window.setCfoRevValue = function(val) {
+    var slider = document.getElementById('cfoRangeRev');
+    if(slider) {
+      slider.value = val;
+      updateCfoSimulation();
+    }
+  };
+
+  window.resetCfoSimulation = function() {
+    cfoState.revenue = 36000000;
+    cfoState.sector = 'realestate';
+    cfoState.cogsPct = 0.58;
+    cfoState.sgaPct = 0.12;
+    
+    var sliderRev = document.getElementById('cfoRangeRev');
+    var sliderCogs = document.getElementById('cfoRangeCogs');
+    var sliderSga = document.getElementById('cfoRangeSga');
+    if(sliderRev) sliderRev.value = 36000000;
+    if(sliderCogs) sliderCogs.value = 58;
+    if(sliderSga) sliderSga.value = 12;
+
+    var pillRe = document.getElementById('secPillRealEstate');
+    var pillRet = document.getElementById('secPillRetail');
+    if(pillRe) pillRe.classList.add('active');
+    if(pillRet) pillRet.classList.remove('active');
+
+    updateCfoSimulation();
+  };
+
+  window.updateCfoSimulation = function() {
+    var sliderRev = document.getElementById('cfoRangeRev');
+    var sliderCogs = document.getElementById('cfoRangeCogs');
+    var sliderSga = document.getElementById('cfoRangeSga');
+
+    if(sliderRev) cfoState.revenue = parseFloat(sliderRev.value) || 36000000;
+    if(sliderCogs) cfoState.cogsPct = (parseFloat(sliderCogs.value) || 58) / 100;
+    if(sliderSga) cfoState.sgaPct = (parseFloat(sliderSga.value) || 12) / 100;
+
+    // Financial calculations
+    var rev = cfoState.revenue;
+    var cogs = rev * cfoState.cogsPct;
+    var gross = rev - cogs;
+    var grossMarginPct = (gross / rev) * 100;
+    var sga = rev * cfoState.sgaPct;
+    var ebitda = gross - sga;
+    var ebitdaMarginPct = (ebitda / rev) * 100;
+
+    // Corporate tax (Egyptian Tax Law No. 91 of 2005: 22.5%)
+    var tax = ebitda > 0 ? ebitda * cfoState.taxRate : 0;
+    var taxPctOfRev = (tax / rev) * 100;
+    var netProfit = ebitda - tax;
+    var netMarginPct = (netProfit / rev) * 100;
+
+    function fmt(n) { return Math.round(n).toLocaleString() + ' EGP'; }
+
+    // Update Slider Labels
+    var valSliderRev = document.getElementById('valSliderRev');
+    var valSliderCogs = document.getElementById('valSliderCogs');
+    var valSliderSga = document.getElementById('valSliderSga');
+
+    if(valSliderRev) valSliderRev.textContent = fmt(rev);
+    if(valSliderCogs) valSliderCogs.textContent = Math.round(cfoState.cogsPct * 100) + '%';
+    if(valSliderSga) valSliderSga.textContent = Math.round(cfoState.sgaPct * 100) + '%';
+
+    // Update KPI Metric Cards
+    var elRev = document.getElementById('cfoKpiRev');
+    var elCogs = document.getElementById('cfoKpiCogs');
+    var elGross = document.getElementById('cfoKpiGross');
+    var elEbitda = document.getElementById('cfoKpiEbitda');
+    var elNet = document.getElementById('cfoKpiNet');
+
+    if(elRev) elRev.textContent = fmt(rev);
+    if(elCogs) elCogs.textContent = fmt(cogs);
+    if(elGross) elGross.textContent = fmt(gross);
+    if(elEbitda) elEbitda.textContent = fmt(ebitda);
+    if(elNet) elNet.textContent = fmt(netProfit);
+
+    var cogsBadge = document.getElementById('cfoCogsPctBadge');
+    var marginBadge = document.getElementById('cfoMarginBadge');
+    var taxSub = document.getElementById('cfoTaxSub');
+    var netBadge = document.getElementById('cfoNetPctBadge');
+
+    if(cogsBadge) cogsBadge.textContent = (cfoState.cogsPct * 100).toFixed(1) + '%';
+    if(marginBadge) marginBadge.textContent = grossMarginPct.toFixed(1) + '%';
+    if(taxSub) {
+      var isAr = document.documentElement.lang === 'ar' || document.body.classList.contains('lang-ar');
+      taxSub.textContent = (isAr ? 'ضريبة الشركات: ' : 'Corp Tax: ') + fmt(tax);
+    }
+    if(netBadge) {
+      netBadge.textContent = netMarginPct.toFixed(1) + '%';
+      if(netMarginPct >= 15) {
+        netBadge.className = 'cfo-trend-badge cfo-trend-up';
+      } else if(netMarginPct >= 5) {
+        netBadge.className = 'cfo-trend-badge';
+        netBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+        netBadge.style.color = '#F59E0B';
+      } else {
+        netBadge.className = 'cfo-trend-badge cfo-trend-down';
+      }
+    }
+
+    // Update Allocation Progress Bar
+    var barCogs = document.getElementById('barCogs');
+    var barSga = document.getElementById('barSga');
+    var barTax = document.getElementById('barTax');
+    var barNet = document.getElementById('barNet');
+    var allocSummary = document.getElementById('cfoAllocSummary');
+
+    var cogsW = Math.max(0, cfoState.cogsPct * 100);
+    var sgaW = Math.max(0, cfoState.sgaPct * 100);
+    var taxW = Math.max(0, taxPctOfRev);
+    var netW = Math.max(0, netMarginPct);
+
+    if(barCogs) barCogs.style.width = cogsW + '%';
+    if(barSga) barSga.style.width = sgaW + '%';
+    if(barTax) barTax.style.width = taxW + '%';
+    if(barNet) barNet.style.width = netW + '%';
+
+    if(allocSummary) {
+      allocSummary.textContent = cogsW.toFixed(1) + '% COGS | ' + sgaW.toFixed(1) + '% SG&A | ' + taxW.toFixed(1) + '% Tax | ' + netW.toFixed(1) + '% Net';
+    }
+
+    // Update Health Status
+    var healthBox = document.getElementById('cfoHealthBadge');
+    var healthIcon = document.getElementById('cfoHealthIcon');
+    var healthText = document.getElementById('cfoHealthText');
+    var isAr = document.documentElement.lang === 'ar' || document.body.classList.contains('lang-ar');
+
+    if(healthBox && healthIcon && healthText) {
+      if(netMarginPct >= 20) {
+        healthBox.style.background = 'rgba(16, 185, 129, 0.08)';
+        healthBox.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        healthBox.style.color = '#10B981';
+        healthIcon.textContent = '🚀';
+        healthText.textContent = isAr ? 'أداء تشغيلي استثنائي وهوامش ربح وتدفقات نقدية ممتازة' : 'Exceptional Operating Efficiency & Healthy Solvency Margin';
+      } else if(netMarginPct >= 10) {
+        healthBox.style.background = 'rgba(56, 189, 248, 0.08)';
+        healthBox.style.borderColor = 'rgba(56, 189, 248, 0.3)';
+        healthBox.style.color = '#38BDF8';
+        healthIcon.textContent = '⚖️';
+        healthText.textContent = isAr ? 'هوامش تجارية متوازنة مع سيولة تشغيلية مستقرة وكافية' : 'Balanced Commercial Margins with Safe Working Capital Liquidity';
+      } else {
+        healthBox.style.background = 'rgba(239, 68, 68, 0.08)';
+        healthBox.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+        healthBox.style.color = '#EF4444';
+        healthIcon.textContent = '⚠️';
+        healthText.textContent = isAr ? 'هوامش ضيقة: يُوصى بهندسة القيمة وترشيد تكاليف التنفيذ والتشغيل' : 'Compressed Margin: Value Engineering & Cost Rationalization Recommended';
+      }
+    }
+
+    renderCfoSvgChart();
+  };
+
+  window.renderCfoSvgChart = function() {
+    var container = document.getElementById('cfoSvgChartBox');
+    if(!container) return;
+
+    var rev = cfoState.revenue;
+    var cogs = rev * cfoState.cogsPct;
+    var sga = rev * cfoState.sgaPct;
+    var ebitda = rev - cogs - sga;
+    var tax = ebitda > 0 ? ebitda * cfoState.taxRate : 0;
+    var net = ebitda - tax;
+
+    var isAnnual = cfoState.period === 'annual';
+    var isAr = document.documentElement.lang === 'ar' || document.body.classList.contains('lang-ar');
+
+    // Data points
+    var periods = [];
+    if(isAnnual) {
+      // 3 Years Comparison (2024 Actual, 2025 Actual, 2026 Target/Simulated)
+      periods = [
+        { label: 'FY2024', rev: rev * 0.72, cogs: cogs * 0.74, sga: sga * 0.75, net: net * 0.68 },
+        { label: 'FY2025', rev: rev * 0.86, cogs: cogs * 0.88, sga: sga * 0.86, net: net * 0.82 },
+        { label: 'FY2026 (Sim)', rev: rev, cogs: cogs, sga: sga, net: net }
+      ];
+    } else {
+      // 4 Quarters breakdown
+      periods = [
+        { label: isAr ? 'الربع 1' : 'Q1', rev: rev * 0.22, cogs: cogs * 0.22, sga: sga * 0.24, net: net * 0.20 },
+        { label: isAr ? 'الربع 2' : 'Q2', rev: rev * 0.25, cogs: cogs * 0.25, sga: sga * 0.25, net: net * 0.25 },
+        { label: isAr ? 'الربع 3' : 'Q3', rev: rev * 0.26, cogs: cogs * 0.26, sga: sga * 0.25, net: net * 0.27 },
+        { label: isAr ? 'الربع 4' : 'Q4', rev: rev * 0.27, cogs: cogs * 0.27, sga: sga * 0.26, net: net * 0.28 }
+      ];
+    }
+
+    var maxVal = 0;
+    periods.forEach(function(p) {
+      if(p.rev > maxVal) maxVal = p.rev;
+    });
+    maxVal = maxVal * 1.15; // padding top
+
+    var width = 500;
+    var height = 230;
+    var padding = { top: 25, right: 25, bottom: 35, left: 55 };
+    var chartW = width - padding.left - padding.right;
+    var chartH = height - padding.top - padding.bottom;
+
+    function scaleY(val) {
+      return padding.top + chartH - (val / maxVal) * chartH;
+    }
+
+    function fmtM(n) {
+      return (n / 1000000).toFixed(1) + 'M';
+    }
+
+    var svgHtml = '<svg viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none" style="width:100%; height:100%; display:block;">';
+
+    // Gradients & Filters
+    svgHtml += '<defs>' +
+      '<linearGradient id="gradRev" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#38BDF8"/><stop offset="100%" stop-color="#0284C7" stop-opacity="0.8"/></linearGradient>' +
+      '<linearGradient id="gradCogs" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FB923C"/><stop offset="100%" stop-color="#EA580C" stop-opacity="0.8"/></linearGradient>' +
+      '<linearGradient id="gradSga" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#A78BFA"/><stop offset="100%" stop-color="#6D28D9" stop-opacity="0.8"/></linearGradient>' +
+      '<linearGradient id="gradNet" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#34D399"/><stop offset="100%" stop-color="#059669" stop-opacity="0.8"/></linearGradient>' +
+      '</defs>';
+
+    // Horizontal Grid Lines & Y-axis labels
+    var gridSteps = 4;
+    for(var i = 0; i <= gridSteps; i++) {
+      var yVal = (maxVal / gridSteps) * i;
+      var yPos = scaleY(yVal);
+      svgHtml += '<line x1="' + padding.left + '" y1="' + yPos + '" x2="' + (width - padding.right) + '" y2="' + yPos + '" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="3,3"/>';
+      svgHtml += '<text x="' + (padding.left - 8) + '" y="' + (yPos + 4) + '" fill="var(--t3)" font-size="9" text-anchor="end" font-family="monospace">' + fmtM(yVal) + '</text>';
+    }
+
+    // Bars
+    var numGroups = periods.length;
+    var groupW = chartW / numGroups;
+    var barW = Math.min(22, (groupW - 20) / 4);
+
+    var netPoints = [];
+
+    periods.forEach(function(p, gIdx) {
+      var groupCenter = padding.left + (gIdx * groupW) + (groupW / 2);
+      var startX = groupCenter - ((barW * 4 + 6) / 2);
+
+      // Bar 1: Rev
+      var hRev = chartH - (scaleY(p.rev) - padding.top);
+      var yRev = scaleY(p.rev);
+      svgHtml += '<rect x="' + startX + '" y="' + yRev + '" width="' + barW + '" height="' + hRev + '" rx="3" fill="url(#gradRev)"><title>' + (isAr ? 'الإيرادات: ' : 'Revenue: ') + Math.round(p.rev).toLocaleString() + ' EGP</title></rect>';
+
+      // Bar 2: COGS
+      var hCogs = chartH - (scaleY(p.cogs) - padding.top);
+      var yCogs = scaleY(p.cogs);
+      svgHtml += '<rect x="' + (startX + barW + 2) + '" y="' + yCogs + '" width="' + barW + '" height="' + hCogs + '" rx="3" fill="url(#gradCogs)"><title>' + (isAr ? 'التكاليف المباشرة: ' : 'COGS: ') + Math.round(p.cogs).toLocaleString() + ' EGP</title></rect>';
+
+      // Bar 3: SG&A
+      var hSga = chartH - (scaleY(p.sga) - padding.top);
+      var ySga = scaleY(p.sga);
+      svgHtml += '<rect x="' + (startX + (barW + 2) * 2) + '" y="' + ySga + '" width="' + barW + '" height="' + hSga + '" rx="3" fill="url(#gradSga)"><title>' + (isAr ? 'مصروفات عمومية: ' : 'SG&A: ') + Math.round(p.sga).toLocaleString() + ' EGP</title></rect>';
+
+      // Bar 4: Net
+      var hNet = chartH - (scaleY(p.net) - padding.top);
+      var yNet = scaleY(p.net);
+      svgHtml += '<rect x="' + (startX + (barW + 2) * 3) + '" y="' + yNet + '" width="' + barW + '" height="' + hNet + '" rx="3" fill="url(#gradNet)"><title>' + (isAr ? 'صافي الربح: ' : 'Net Profit: ') + Math.round(p.net).toLocaleString() + ' EGP</title></rect>';
+
+      // Trend Line point
+      var netPointX = startX + (barW + 2) * 3 + (barW / 2);
+      netPoints.push({ x: netPointX, y: yNet, val: p.net });
+
+      // Group Label on X axis
+      svgHtml += '<text x="' + groupCenter + '" y="' + (height - padding.bottom + 18) + '" fill="var(--t2)" font-size="10" font-weight="600" text-anchor="middle">' + p.label + '</text>';
+    });
+
+    // Net Profit Connecting Polyline & Glowing Dots
+    if(netPoints.length > 1) {
+      var pointsAttr = netPoints.map(function(pt) { return pt.x + ',' + pt.y; }).join(' ');
+      svgHtml += '<polyline points="' + pointsAttr + '" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>';
+      netPoints.forEach(function(pt) {
+        svgHtml += '<circle cx="' + pt.x + '" cy="' + pt.y + '" r="4" fill="#10B981" stroke="#fff" stroke-width="1.5"/>';
+      });
+    }
+
+    svgHtml += '</svg>';
+    container.innerHTML = svgHtml;
+  };
+
+  window.exportCfoExecutiveSummary = function() {
+    var rev = cfoState.revenue;
+    var cogs = rev * cfoState.cogsPct;
+    var gross = rev - cogs;
+    var grossMargin = ((gross / rev) * 100).toFixed(1);
+    var sga = rev * cfoState.sgaPct;
+    var ebitda = gross - sga;
+    var tax = ebitda > 0 ? ebitda * cfoState.taxRate : 0;
+    var net = ebitda - tax;
+    var netMargin = ((net / rev) * 100).toFixed(1);
+
+    var now = new Date();
+    var dateStr = now.toLocaleDateString('en-GB') + ' ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    function fmt(n) { return Math.round(n).toLocaleString() + ' EGP'; }
+
+    var sectorName = cfoState.sector === 'realestate' ? 'Real Estate Development (Robel Model)' : 'Commercial Trade & Distribution';
+
+    var printContent = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Executive Boardroom P&L Memo - George Gamal</title>' +
+      '<style>' +
+      '@page { size: A4; margin: 18mm; }' +
+      'body { font-family: "Segoe UI", Arial, sans-serif; color: #1E293B; background: #fff; margin: 0; padding: 24px; line-height: 1.5; }' +
+      '.memo-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0284C7; padding-bottom: 16px; margin-bottom: 24px; }' +
+      '.title-box h1 { margin: 0 0 6px 0; color: #0F172A; font-size: 20px; font-weight: 800; }' +
+      '.title-box p { margin: 0; color: #64748B; font-size: 13px; }' +
+      '.author-badge { text-align: right; }' +
+      '.author-badge h3 { margin: 0; color: #0284C7; font-size: 15px; }' +
+      '.author-badge p { margin: 2px 0 0; color: #475569; font-size: 12px; }' +
+      '.meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px; margin-bottom: 24px; font-size: 13px; }' +
+      '.meta-item b { display: block; color: #64748B; font-size: 11px; text-transform: uppercase; margin-bottom: 4px; }' +
+      'table { width: 100%; border-collapse: collapse; margin-bottom: 28px; }' +
+      'th { background: #0F172A; color: #fff; text-align: left; padding: 10px 14px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }' +
+      'td { padding: 10px 14px; border-bottom: 1px solid #E2E8F0; font-size: 13px; }' +
+      'tr.highlight { background: #F0FDF4; font-weight: 700; color: #166534; }' +
+      'tr.sub { background: #F8FAFC; font-weight: 600; color: #0F172A; }' +
+      '.amt { text-align: right; font-family: monospace; font-size: 13px; }' +
+      '.sign-box { margin-top: 36px; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 20px; border-top: 1px dashed #CBD5E1; font-size: 12px; color: #64748B; }' +
+      '.stamp { border: 2px solid #0284C7; color: #0284C7; padding: 8px 16px; border-radius: 6px; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; transform: rotate(-3deg); }' +
+      '</style></head><body>' +
+      '<div class="memo-header">' +
+      '<div class="title-box">' +
+      '<h1>BOARDROOM FINANCIAL EXECUTIVE BRIEFING</h1>' +
+      '<p>Corporate Performance & P&L Sensitivity Model | Sector: ' + sectorName + '</p>' +
+      '</div>' +
+      '<div class="author-badge">' +
+      '<h3>GEORGE GAMAL</h3>' +
+      '<p>General Accountant & Financial Analyst</p>' +
+      '</div>' +
+      '</div>' +
+      '<div class="meta-grid">' +
+      '<div class="meta-item"><b>Simulation Date:</b>' + dateStr + '</div>' +
+      '<div class="meta-item"><b>Corporate Tax Framework:</b>Law 91/2005 (22.5%)</div>' +
+      '<div class="meta-item"><b>IFRS Standards:</b>IFRS 15 (Revenue) / IAS 1</div>' +
+      '</div>' +
+      '<table>' +
+      '<thead><tr><th>Financial Statement Line Item</th><th>Ratio / Model Base</th><th class="amt">Consolidated Amount (EGP)</th></tr></thead>' +
+      '<tbody>' +
+      '<tr><td><b>Gross Recognized Revenue</b></td><td>100.0% of Volume</td><td class="amt"><b>' + fmt(rev) + '</b></td></tr>' +
+      '<tr><td>Less: Cost of Goods Sold / Contracting Direct Costs (COGS)</td><td>' + (cfoState.cogsPct * 100).toFixed(1) + '% Direct Cost</td><td class="amt" style="color:#DC2626;">- ' + fmt(cogs) + '</td></tr>' +
+      '<tr class="sub"><td><b>Gross Operating Profit</b></td><td><b>' + grossMargin + '% Gross Margin</b></td><td class="amt"><b>' + fmt(gross) + '</b></td></tr>' +
+      '<tr><td>Less: Selling, General & Administrative Expenses (SG&A)</td><td>' + (cfoState.sgaPct * 100).toFixed(1) + '% Overhead</td><td class="amt" style="color:#DC2626;">- ' + fmt(sga) + '</td></tr>' +
+      '<tr class="sub"><td><b>Operating Profit Before Tax (EBITDA)</b></td><td>Operating Margin</td><td class="amt"><b>' + fmt(ebitda) + '</b></td></tr>' +
+      '<tr><td>Less: Egyptian Corporate Income Tax Provision</td><td>22.5% Tax Rate</td><td class="amt" style="color:#DC2626;">- ' + fmt(tax) + '</td></tr>' +
+      '<tr class="highlight"><td><b>NET PROFIT AFTER TAX (PAT)</b></td><td><b>' + netMargin + '% Net Margin</b></td><td class="amt"><b>' + fmt(net) + '</b></td></tr>' +
+      '</tbody></table>' +
+      '<div class="sign-box">' +
+      '<div>Prepared and audited via George Gamal Financial BI Suite.<br>All balances comply with Egyptian Tax Authority & IFRS rules.</div>' +
+      '<div class="stamp">VERIFIED FINANCIAL AUDIT</div>' +
+      '</div>' +
+      '</body></html>';
+
+    var printWin = window.open('', '_blank');
+    if(printWin) {
+      printWin.document.open();
+      printWin.document.write(printContent);
+      printWin.document.close();
+      setTimeout(function() { printWin.print(); }, 400);
+    }
+  };
+
+  // Initialize once DOM is ready
+  if(document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      updateCfoSimulation();
+    });
+  } else {
+    updateCfoSimulation();
+  }
+})();
+
+
+    /* ===================================================
+   QUICK CALC WIDGET & MODAL CONTROLLER
+   =================================================== */
+
+(function() {
+  var qcType = 'sales';
+
+  window.setQcType = function(type) {
+    qcType = type;
+    var btnSales = document.getElementById('qcTypeSales');
+    var btnPurch = document.getElementById('qcTypePurch');
+    var vatLbl = document.getElementById('qcVatLbl');
+    var netLbl = document.getElementById('qcNetLbl');
+    var isAr = document.documentElement.lang === 'ar' || document.body.classList.contains('lang-ar');
+
+    if(type === 'sales') {
+      if(btnSales) btnSales.classList.add('active');
+      if(btnPurch) btnPurch.classList.remove('active');
+      if(vatLbl) vatLbl.textContent = isAr ? 'ضريبة مخرجات (14%)' : 'Output VAT (14%)';
+      if(netLbl) netLbl.textContent = isAr ? 'الصافي المستحق (مدين)' : 'Net Receivable';
+    } else {
+      if(btnPurch) btnPurch.classList.add('active');
+      if(btnSales) btnSales.classList.remove('active');
+      if(vatLbl) vatLbl.textContent = isAr ? 'ضريبة مدخلات (14%)' : 'Input VAT (14%)';
+      if(netLbl) netLbl.textContent = isAr ? 'الصافي للدفع (دائن)' : 'Net Payable';
+    }
+
+    // Sync with modal if open
+    if(window.setSimType) window.setSimType(type);
+    runQcCalc();
+  };
+
+  window.setQcAmount = function(amt) {
+    var input = document.getElementById('qcInputAmount');
+    if(input) {
+      input.value = amt;
+      runQcCalc();
+    }
+  };
+
+  window.runQcCalc = function() {
+    var input = document.getElementById('qcInputAmount');
+    if(!input) return;
+
+    var base = parseFloat(input.value) || 0;
+    var vatRate = 0.14;
+    var whtRate = 0.01;
+
+    var vat = base * vatRate;
+    var wht = base * whtRate;
+    var net = qcType === 'sales' ? (base + vat - wht) : (base + vat - wht);
+
+    function fmt(n) { return Math.round(n).toLocaleString() + ' EGP'; }
+
+    var disp = document.getElementById('qcDisplayVal');
+    var valBase = document.getElementById('qcValBase');
+    var valVat = document.getElementById('qcValVat');
+    var valWht = document.getElementById('qcValWht');
+    var valNet = document.getElementById('qcValNet');
+
+    if(disp) disp.textContent = fmt(base);
+    if(valBase) valBase.textContent = fmt(base);
+    if(valVat) valVat.textContent = '+' + fmt(vat);
+    if(valWht) valWht.textContent = '-' + fmt(wht);
+    if(valNet) valNet.textContent = fmt(net);
+
+    // Sync with the main simulator amount input inside the modal
+    var simAmtInput = document.getElementById('simAmount');
+    if(simAmtInput && simAmtInput.value != base) {
+      simAmtInput.value = base;
+      if(window.runSimCalc) window.runSimCalc();
+    }
+  };
+
+  /* Modal System */
+  window.openFinModal = function(tabName) {
+    var modal = document.getElementById('finSuiteModal');
+    if(!modal) return;
+
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Switch to requested tab
+    if(typeof window.switchFinSuiteTab === 'function') {
+      window.switchFinSuiteTab(tabName || 'cfo');
+    }
+
+    // Trigger chart layout after modal is displayed
+    setTimeout(function() {
+      if(typeof window.renderCfoSvgChart === 'function') {
+        window.renderCfoSvgChart();
+      }
+    }, 100);
+  };
+
+  window.closeFinModal = function() {
+    var modal = document.getElementById('finSuiteModal');
+    if(!modal) return;
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  };
+
+  window.handleFinModalBackdrop = function(e) {
+    if(e && e.target && e.target.id === 'finSuiteModal') {
+      window.closeFinModal();
+    }
+  };
+
+  // Close on Escape key
+  document.addEventListener('keydown', function(e) {
+    if(e.key === 'Escape' || e.key === 'Esc') {
+      window.closeFinModal();
+    }
+  });
+
+  // Init quick calc on load
+  if(document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', runQcCalc);
+  } else {
+    runQcCalc();
+  }
+})();
+
+
+    /* ✨ EGYPTIAN TAX & AUTOMATED JOURNAL SIMULATOR ✨ */
+    var simType = 'sales';
+    window.setSimType = function(type) {
+      simType = type;
+      var btnSales = document.getElementById('simTypeSales');
+      var btnPurch = document.getElementById('simTypePurch');
+      if(btnSales && btnPurch) {
+        if(type === 'sales') {
+          btnSales.classList.add('active');
+          btnPurch.classList.remove('active');
+        } else {
+          btnPurch.classList.add('active');
+          btnSales.classList.remove('active');
+        }
+      }
+      runSimCalc();
+    };
+
+    window.setSimAmount = function(val) {
+      var input = document.getElementById('simAmount');
+      if(input) { input.value = val; runSimCalc(); }
+    };
+
+    window.runSimCalc = function() {
+      var amountInput = document.getElementById('simAmount');
+      var vatSelect = document.getElementById('simVatRate');
+      var whtSelect = document.getElementById('simWhtRate');
+      if(!amountInput || !vatSelect || !whtSelect) return;
+
+      var base = parseFloat(amountInput.value) || 0;
+      var vatRate = parseFloat(vatSelect.value) || 0;
+      var whtRate = parseFloat(whtSelect.value) || 0;
+
+      var vatAmount = base * vatRate;
+      var whtAmount = base * whtRate;
+      var netTotal = base + vatAmount - whtAmount;
+
+      function fmt(n) { return Math.round(n).toLocaleString() + ' EGP'; }
+
+      var subtotalEl = document.getElementById('kpiSubtotal');
+      var vatEl = document.getElementById('kpiVat');
+      var whtEl = document.getElementById('kpiWht');
+      var netEl = document.getElementById('kpiNet');
+      var vatLbl = document.getElementById('kpiVatLbl');
+      var netLbl = document.getElementById('kpiNetLbl');
+      var refEl = document.getElementById('simLedgerRef');
+
+      if(subtotalEl) subtotalEl.textContent = fmt(base);
+      if(vatEl) vatEl.textContent = '+' + fmt(vatAmount);
+      if(whtEl) whtEl.textContent = '-' + fmt(whtAmount);
+      if(netEl) netEl.textContent = fmt(netTotal);
+
+      if(vatLbl) vatLbl.textContent = simType === 'sales' ? (isAr ? 'ضريبة القيمة المضافة مخرجات (14%)' : 'Output VAT (14%)') : (isAr ? 'ضريبة القيمة المضافة مدخلات (14%)' : 'Input VAT (14%)');
+      if(netLbl) netLbl.textContent = simType === 'sales' ? (isAr ? 'صافي المقبوضات النقدية' : 'Net Cash Receivable') : (isAr ? 'صافي المدفوعات النقدية' : 'Net Cash Payable');
+      if(refEl) refEl.textContent = simType === 'sales' ? (isAr ? 'سند قيد مبيعات: JV-SALES-2026 · معيار IFRS 15' : 'Sales Journal: JV-SALES-2026 · Standard IFRS 15') : (isAr ? 'سند قيد مشتريات: JV-PURCH-2026 · معيار IAS 2' : 'Purchase Journal: JV-PURCH-2026 · Standard IAS 2');
+
+      var tbody = document.getElementById('simTableBody');
+      var totalBalEl = document.getElementById('simTotalBalance');
+      if(!tbody) return;
+
+      var rowsHtml = '';
+      var totalDebit = 0;
+
+      if(simType === 'sales') {
+        var debitNet = netTotal;
+        var debitWht = whtAmount;
+        var creditRev = base;
+        var creditVat = vatAmount;
+        totalDebit = debitNet + debitWht;
+
+        rowsHtml += '<tr><td><span class="t-code">1110</span><span class="t-acc">' + (isAr ? 'العملاء / الصندوق والبنوك (Accounts Receivable / Cash)' : 'Accounts Receivable / Cash') + '</span></td><td class="t-debit">' + fmt(debitNet) + '</td><td>—</td></tr>';
+        if(whtAmount > 0) {
+          rowsHtml += '<tr><td><span class="t-code">1240</span><span class="t-acc">' + (isAr ? 'ضريبة أ.ت.ص محتجزة لدى الغير (WHT Receivable - نموذج 41)' : 'WHT Receivable (Egyptian Tax Law)') + '</span></td><td class="t-debit">' + fmt(debitWht) + '</td><td>—</td></tr>';
+        }
+        rowsHtml += '<tr><td><span class="t-code">4100</span><span class="t-acc">' + (isAr ? 'إيرادات المبيعات (Gross Sales Revenue - IFRS 15)' : 'Gross Sales Revenue (IFRS 15)') + '</span></td><td>—</td><td class="t-credit">' + fmt(creditRev) + '</td></tr>';
+        if(vatAmount > 0) {
+          rowsHtml += '<tr><td><span class="t-code">2210</span><span class="t-acc">' + (isAr ? 'مصلحة الضرائب - ضريبة القيمة المضافة (Output VAT 14%)' : 'Output VAT Payable (ETA Portal)') + '</span></td><td>—</td><td class="t-credit">' + fmt(creditVat) + '</td></tr>';
+        }
+      } else {
+        totalDebit = base + vatAmount;
+
+        rowsHtml += '<tr><td><span class="t-code">5100</span><span class="t-acc">' + (isAr ? 'حساب المشتريات / المصروفات العمومية (Purchases & Operating Expenses)' : 'Purchases & Operating Expenses (IAS 2)') + '</span></td><td class="t-debit">' + fmt(base) + '</td><td>—</td></tr>';
+        if(vatAmount > 0) {
+          rowsHtml += '<tr><td><span class="t-code">1220</span><span class="t-acc">' + (isAr ? 'ضريبة القيمة المضافة مدخلات قابلة للخصم (Input VAT Recoverable)' : 'Input VAT Recoverable (ETA Portal)') + '</span></td><td class="t-debit">' + fmt(vatAmount) + '</td><td>—</td></tr>';
+        }
+        rowsHtml += '<tr><td><span class="t-code">2110</span><span class="t-acc">' + (isAr ? 'الموردين / الصندوق والبنوك (Accounts Payable / Cash)' : 'Accounts Payable / Cash') + '</span></td><td>—</td><td class="t-credit">' + fmt(netTotal) + '</td></tr>';
+        if(whtAmount > 0) {
+          rowsHtml += '<tr><td><span class="t-code">2240</span><span class="t-acc">' + (isAr ? 'ضريبة الخصم والإضافة مستحقة للتوريد (WHT Payable - نموذج 41)' : 'WHT Payable to Tax Authority (Form 41)') + '</span></td><td>—</td><td class="t-credit">' + fmt(whtAmount) + '</td></tr>';
+        }
+      }
+
+      tbody.innerHTML = rowsHtml;
+      if(totalBalEl) totalBalEl.textContent = fmt(totalDebit);
+    };
+
+      window.printJournalVoucher = function() {
+    var title = (typeof isAr !== 'undefined' && isAr) ? "\u0633\u0646\u062F \u0642\u064A\u062F \u0645\u062D\u0627\u0633\u0628\u064A \u0645\u0639\u062A\u0645\u062F" : "Certified Accounting Journal Voucher";
+    var tableEl = document.getElementById('journalTableBody');
+    if (!tableEl) return;
+    var rows = tableEl.querySelectorAll('tr');
+    var w = window.open('', '_blank', 'width=850,height=650');
+    if (!w) return;
+    var isArabic = (typeof isAr !== 'undefined' && isAr);
+    var d = w.document;
+    d.open();
+    d.write('<!DOCTYPE html><html dir="' + (isArabic ? 'rtl' : 'ltr') + '"><head><title>' + title + '</title>');
+    d.write('<style>');
+    d.write('body{font-family:system-ui,-apple-system,sans-serif;padding:30px;color:#1e293b;background:#fff;}');
+    d.write('.hdr{display:flex;justify-content:space-between;border-bottom:2px solid #0284c7;padding-bottom:15px;margin-bottom:20px;}');
+    d.write('.title{font-size:20px;font-weight:800;color:#0284c7;}');
+    d.write('.meta{font-size:12px;color:#64748b;margin-top:4px;}');
+    d.write('table{width:100%;border-collapse:collapse;margin:20px 0;}');
+    d.write('th,td{border:1px solid #cbd5e1;padding:10px 12px;text-align:' + (isArabic ? 'right' : 'left') + ';font-size:13px;}');
+    d.write('th{background:#f0f9ff;color:#0369a1;font-weight:700;}');
+    d.write('.num{text-align:right;font-family:Consolas,monospace;font-weight:600;}');
+    d.write('.sigs{display:flex;justify-content:space-between;margin-top:50px;padding-top:20px;font-size:13px;border-top:1px dashed #cbd5e1;}');
+    d.write('@media print{.no-print{display:none;}}');
+    d.write('</' + 'style>');
+    d.write('</head><body>');
+    d.write('<div class="hdr"><div><div class="title">' + title + '</div><div class="meta">' + (isArabic ? '\u062C\u0648\u0631\u062C \u062C\u0645\u0627\u0644 \u062D\u0644\u0645\u064A - \u0645\u062D\u0627\u0633\u0628 \u0639\u0627\u0645 \u0648\u0636\u0631\u0627\u0626\u0628' : 'George Gamal Helmy - General & Tax Accountant') + '</div></div><div><div class="meta">' + new Date().toLocaleDateString() + '</div><div class="meta">REF: GG-ACC-' + Math.floor(1000 + Math.random()*9000) + '</div></div></div>');
+    d.write('<table><thead><tr><th>' + (isArabic ? '\u0627\u0644\u062D\u0633\u0627\u0628' : 'Account') + '</th><th>' + (isArabic ? '\u0627\u0644\u0628\u064A\u0627\u0646 \u0648\u0627\u0644\u062A\u0641\u0627\u0635\u064A\u0644' : 'Description') + '</th><th class="num">' + (isArabic ? '\u0645\u062F\u064A\u0646 (EGP)' : 'Debit (EGP)') + '</th><th class="num">' + (isArabic ? '\u062F\u0627\u0626\u0646 (EGP)' : 'Credit (EGP)') + '</th></tr></thead><tbody>');
+    rows.forEach(function(r) {
+      var cells = r.querySelectorAll('td');
+      if (cells.length >= 4) {
+        d.write('<tr><td>' + cells[0].innerText + '</td><td>' + cells[1].innerText + '</td><td class="num">' + cells[2].innerText + '</td><td class="num">' + cells[3].innerText + '</td></tr>');
+      }
+    });
+    d.write('</tbody></table>');
+    d.write('<div class="sigs"><div>' + (isArabic ? '\u0625\u0639\u062F\u0627\u062F: \u062C\u0648\u0631\u062C \u062C\u0645\u0627\u0644 \u062D\u0644\u0645\u064A' : 'Prepared By: George Gamal') + '</div><div>' + (isArabic ? '\u0645\u0631\u0627\u062C\u0639\u0629 \u0627\u0644\u062D\u0633\u0627\u0628\u0627\u062A: \u0645\u0639\u062A\u0645\u062F' : 'Audit Review: Verified') + '</div><div>' + (isArabic ? '\u0627\u0644\u0627\u0639\u062A\u0645\u0627\u062F \u0627\u0644\u0645\u0627\u0644\u064A: \u0645\u0635\u062F\u0642' : 'Financial Approval: Certified') + '</div></div>');
+    d.write('<div style="margin-top:30px;text-align:center;" class="no-print"><button onclick="window.print()" style="padding:10px 24px;background:#0284c7;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-size:14px;">' + (isArabic ? '\u0637\u0628\u0627\u0639\u0629 / \u062D\u0641\u0638 \u0643\u0645\u0644\u0641 PDF' : 'Print / Save as PDF') + '</button></div>');
+    d.write('</body></html>');
+    d.close();
+  };
+
+  window.copyJournalEntry = function() {
+      var amount = document.getElementById('simAmount').value;
+      var net = document.getElementById('kpiNet').textContent;
+      var vat = document.getElementById('kpiVat').textContent;
+      var wht = document.getElementById('kpiWht').textContent;
+      var btnTxt = document.getElementById('copyBtnTxt');
+
+      var text = "=== GEORGE GAMAL HELMY | AUTOMATED JOURNAL ENTRY ===\n" +
+                 "Reference: " + document.getElementById('simLedgerRef').textContent + "\n" +
+                 "Base Amount: " + amount + " EGP\n" +
+                 "VAT: " + vat + " | WHT: " + wht + " | Net: " + net + "\n" +
+                 "Status: Balanced & Compliant (EAS / IFRS)";
+
+      navigator.clipboard.writeText(text).then(function() {
+        if(btnTxt) {
+          var orig = btnTxt.textContent;
+          btnTxt.textContent = isAr ? '✓ تم النسخ بنجاح!' : '✓ Copied to Clipboard!';
+          setTimeout(function() { btnTxt.textContent = orig; }, 2500);
+        }
+      });
+    };
+
+    window.toggleTimeline = function(id, btn) {
+      var drawer = document.getElementById(id);
+      if(!drawer) return;
+      drawer.classList.toggle('open');
+      if(btn) {
+        if(drawer.classList.contains('open')) {
+          btn.style.borderColor = 'var(--a)';
+          btn.style.background = 'var(--a-glow)';
+        } else {
+          btn.style.borderColor = '';
+          btn.style.background = '';
+        }
+      }
+    };
+
+    // Run simulator on init
+    runSimCalc();
+
+    // Register Service Worker for PWA & Fast Offline Caching
+    if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./sw.js').catch(function() {});
+      });
+    }
+  </script>
+
+  <!-- Certificate Lightbox Modal -->
+  <div id="certModal" class="cert-modal" onclick="closeCertModal(event)" aria-modal="true" role="dialog">
+    <div class="cert-modal-box">
+      <button class="cert-modal-close" onclick="closeCertModal()" aria-label="Close">✕</button>
+      <div id="certModalContent" class="cert-modal-content"></div>
+      <div class="cert-modal-caption">
+        <h4 id="certModalTitle" data-i="cert_modal_title">Certificate Preview</h4>
+        <a id="certModalLink" href="#" target="_blank" class="btn btn-fill" download style="font-size:0.75rem;padding:7px 16px;">
+          <span data-i="open_full_cert">Open Full / Download ↗</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Floating Quick Action Bar -->
+  <aside id="mobileQuickBar" class="mob-quick-bar" aria-label="Quick Actions">
+    <a href="CV_George_Gamal.pdf" class="mq-btn mq-cv" target="_blank" aria-label="Download CV">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+      </svg>
+      <span data-i="h_btn_cv">Download CV</span>
+    </a>
+    <a href="https://wa.me/201270605528" target="_blank" rel="noopener noreferrer" class="mq-btn mq-wa" aria-label="WhatsApp George">
+      <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.16 8.16 0 0 1-1.25-4.38c0-4.51 3.67-8.18 8.18-8.18 2.18 0 4.24.85 5.79 2.4 1.55 1.55 2.4 3.61 2.4 5.79 0 4.51-3.67 8.22-8.18 8.22z"/>
+      </svg>
+      <span data-i="mob_chat_btn">WhatsApp</span>
+    </a>
+  </aside>
+</body>
+</html>
+, 'Î£', 'ROI', 'IFRS', 'TAX', 'P&L', 'ERP', 'Excel', '%', 'VAT'];
 
       window.addEventListener('mousemove', function(e) {
         mX = e.clientX;

@@ -1,0 +1,28 @@
+{
+  "name": "جورج جمال | George Gamal (جورج جمال حلمي)",
+  "short_name": "George Gamal",
+  "description": "الموقع الرسمي للمحاسب جورج جمال (George Gamal) - محاسب عام وإيرادات وتكاليف بالإسكندرية، مصر",
+  "start_url": "https://georgegamal11.github.io/",
+  "scope": "https://georgegamal11.github.io/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a1128",
+  "theme_color": "#0369a1",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["business", "finance", "portfolio"],
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "images/profile_professional_7_11zon.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any"
+    }
+  ]
+}

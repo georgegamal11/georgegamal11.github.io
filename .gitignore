@@ -1,0 +1,7 @@
+# Backups & scratch files
+*.bak
+*.before_cfo_bak
+*.junk_duplicate_bak
+*.working_bak
+check_unused.py
+temp*

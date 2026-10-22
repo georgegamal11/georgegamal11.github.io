@@ -1,4 +1,47 @@
+# robots.txt for George Gamal Helmy Portfolio
+# https://georgegamal11.github.io/
+
 User-agent: *
 Allow: /
-Sitemap: https://georgegamal.netlify.app/sitemap.xml
 
+# Microsoft Bing & Edge
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: msnbot
+Allow: /
+
+# Google Search & Google Images
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /images/
+
+# DuckDuckGo
+User-agent: DuckDuckBot
+Allow: /
+
+# Yahoo Search
+User-agent: Slurp
+Allow: /
+
+# Yandex Search
+User-agent: Yandex
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+# Apple Spotlight & Siri Search
+User-agent: Applebot
+Allow: /
+
+# Baidu Search
+User-agent: Baiduspider
+Allow: /
+
+# Sitemaps & Host
+Sitemap: https://georgegamal11.github.io/sitemap.xml
+Host: https://georgegamal11.github.io
